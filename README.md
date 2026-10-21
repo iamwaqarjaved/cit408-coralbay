@@ -8,6 +8,7 @@ Each week's folder holds the SQL, written analysis and diagrams for that week's 
 |---|---|---|
 | [`week2/`](week2/) | Assignment 2.1: normalization design for the fleet work orders (UNF → 1NF → 2NF → 3NF) | Submitted |
 | [`week2/superstore/`](week2/superstore/) | Assignment 2.3: normalize the 9,994-line Superstore retail file and build it in PostgreSQL | Submitted |
+| [`week3/backup/`](week3/backup/) | Assignment 3.1: back up Superstore, restore it, rescue a single table, and plan RPO/RTO | Submitted |
 
 ---
 
@@ -78,6 +79,10 @@ One check fails. Depot `DEP-FLL` shows two phone numbers: `(954) 555-0118` on 26
 
 ### The final 3NF design (9 tables)
 
+![Fleet work orders 3NF ERD](week2/erd.png)
+
+*The ERD pgAdmin generated from the nine built tables.*
+
 ```
 truck_model ──< truck ──< work_order >── depot
                               │  ^
@@ -138,15 +143,100 @@ Rejoining the nine tables reproduces the 1NF data exactly. The only difference i
 
 ### Proof that it works
 
+![Superstore 3NF ERD](week2/superstore/erd.png)
+
+*The ERD pgAdmin generated for the ten Superstore tables. The staging table stands alone.*
+
+
 - Rejoining all 10 tables returns **9,994 rows**, and they match the staging data **column for column** (0 differences either way).
 - Total sales are **$2,297,200.8603** in both the staging table and the 3NF tables.
 - Inserting a line for a product that doesn't exist is rejected with `violates foreign key constraint "order_line_product_key_fkey"`.
 
 ---
 
+## Week 3: Backing up Superstore and proving the restore
+
+### The problem
+
+The Superstore database from Week 2 held 9,994 order lines with no backup, so a server failure would have lost all of it. The task was to back it up the way a DBA would, restore it, rescue one damaged table, and prove each step with numbers rather than with "no errors".
+
+### What's in the folder
+
+| File | What it shows |
+|---|---|
+| [`commands.md`](week3/backup/commands.md) | Every command in order, with a one-line explanation, written so anyone can repeat it |
+| [`verify.sql`](week3/backup/verify.sql) | Row counts, sales and profit totals, and per-table write statistics, with the output of all three runs pasted in |
+| [`backup_plan.md`](week3/backup/backup_plan.md) | Schedule, retention, where copies live, restore testing, and the RPO and RTO, all based on measured times |
+| Screenshots `01`–`07` | Shift report, role setup, timed dumps, backup folder, full restore, rescue, and the restored database in pgAdmin |
+
+### 1. A backup role that can only read
+
+`backup_operator` can log in but holds no privileges of its own. It inherits `SELECT` from a group role, `superstore_reader`, and nothing more. It read all 9,994 order lines, and a `DELETE` was refused with `permission denied`.
+
+![backup_operator and its membership](week3/backup/02_backup_operator_roles.png)
+
+### 2. Three backups, written straight to my computer
+
+pg_dump ran on my Mac and pulled the data over the network from Supabase, so every file was off the server from the moment it was written. Each file name carries the date.
+
+| Backup | Purpose | Size | Time |
+|---|---|---|---|
+| `superstore_2026-10-20.dump` | Custom format: compressed, and restorable one table at a time | 865 KB | 15.03 s |
+| `superstore_2026-10-20.sql` | Plain SQL: readable, and replayable with psql alone | 3.2 MB | 14.22 s |
+| `roles_2026-10-20.sql` | Server roles and memberships, without passwords | 7.9 KB | 11.13 s |
+
+![The three backups in Finder](week3/backup/04_backup_folder.png)
+
+One lesson came up immediately. My Mac had pg_dump 14, and the server runs PostgreSQL 17.6. pg_dump refuses to dump a server newer than itself, so I installed the version 17 client tools first.
+
+### 3. Full restore, proven to the cent
+
+I restored the custom dump into a new database, `superstore_restore`, in 9.59 s, then ran the same checks on both databases.
+
+| Check | Original | Restored |
+|---|---|---|
+| Row counts, all 11 tables | 3 to 9,994 | identical |
+| Total sales | 2,297,200.86 | 2,297,200.86 |
+| Total profit | 286,397.02 | 286,397.02 |
+
+![Verification of the restored database](week3/backup/05_full_restore_verify.png)
+
+### 4. Rescuing one table without touching the others
+
+In the restored copy only, I deleted all 9,994 order lines, then restored just that table's data from the dump:
+
+```bash
+pg_restore --data-only -n superstore -t order_line superstore_2026-10-20.dump
+```
+
+It took 2.64 s, and the counts and totals matched again. PostgreSQL's per-table statistics show that nothing else was touched: only `order_line` shows a delete (9,994) and a second load (19,988 rows inserted). Every other table was loaded once and never changed.
+
+![Single-table rescue and its proof](week3/backup/06_single_table_rescue.png)
+
+### 5. The plan
+
+| | |
+|---|---|
+| Schedule | Custom dump nightly at 02:00; plain and roles dumps weekly |
+| Retention | 14 daily, 8 weekly, 12 monthly |
+| Copies | 3-2-1: the server, my computer, and cloud storage off-site |
+| Restore test | Weekly full restore plus verify; monthly single-table drill |
+| **RPO** | **24 hours** (one dump per night) |
+| **RTO** | **1 hour** for a full restore; about 15 minutes for one table |
+
+The measured work is small: about 10 seconds to restore. Most of the RTO is people's time: noticing the failure, finding the right file, and checking the result.
+
+### Recovery decisions (Activity 3.2)
+
+The course's incident desk set six recovery tickets, ranging from a dropped table to a lost server and an auditor needing last Friday's numbers. For each one I chose the recovery method.
+
+![Incident desk shift report](week3/backup/01_shift_report.png)
+
+---
+
 ## Tools
 
-PostgreSQL 16 · pgAdmin 4 · Supabase · Docker
+PostgreSQL 17 (Supabase) · psql, pg_dump, pg_dumpall and pg_restore · pgAdmin 4 · Git and GitHub
 
 ## Author
 
