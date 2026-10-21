@@ -14,7 +14,7 @@
 | Full restore (`pg_restore` into `superstore_restore`) | 9.59 s | | |
 | Single-table rescue (`order_line`, data only) | 2.64 s | | |
 
-Times are the `real` value printed by `/usr/bin/time -p`, measured from my Mac over the internet to Supabase. The three dump times include the few seconds I spent typing backup_operator's password at the prompt, so the dumps themselves are faster than shown. The restore times ran with no prompt and are pure work. The custom dump is about a quarter the size of the plain dump (865 KB against 3.2 MB) because it is compressed.
+Times are the `real` value printed by `/usr/bin/time -p`, measured from my Mac over the internet to Supabase. The three dump times include the few seconds I spent typing backup_operator's password at the prompt, so the dumps themselves are faster than shown. The restore times ran with no prompt and are pure work. The custom dump is about a quarter the size of the plain dump (865 KB against 3.2 MB) because it is compressed. Sizes are from `ls -lh`, which counts 1 KB as 1,024 bytes; Finder counts 1 KB as 1,000 bytes, so it shows the same files as 886 KB, 3.3 MB and 8 KB.
 
 ## 2. When Superstore is backed up
 
