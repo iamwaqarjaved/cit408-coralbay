@@ -1,0 +1,20 @@
+ customer_table 
+----------------
+ 
+(1 row)
+
+                     Table "drill.dispatch"
+     Column     |     Type      | Collation | Nullable | Default 
+----------------+---------------+-----------+----------+---------
+ dispatch_id    | integer       |           | not null | 
+ customer_id    | integer       |           | not null | 
+ dispatch_date  | date          |           | not null | 
+ freight_charge | numeric(10,2) |           | not null | 
+ batch_no       | integer       |           | not null | 0
+Indexes:
+    "dispatch_pkey" PRIMARY KEY, btree (dispatch_id)
+Check constraints:
+    "dispatch_freight_charge_check" CHECK (freight_charge >= 0::numeric)
+Referenced by:
+    TABLE "drill.dispatch_line" CONSTRAINT "dispatch_line_dispatch_id_fkey" FOREIGN KEY (dispatch_id) REFERENCES drill.dispatch(dispatch_id)
+

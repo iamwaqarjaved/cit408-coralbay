@@ -1,0 +1,15 @@
+2026-10-21 07:42:49.773 UTC [28] @ LOG:  restored log file "000000010000000000000004" from archive
+2026-10-21 07:42:49.782 UTC [28] @ LOG:  starting point-in-time recovery to XID 812
+2026-10-21 07:42:49.794 UTC [28] @ LOG:  restored log file "000000010000000000000005" from archive
+2026-10-21 07:42:49.803 UTC [28] @ LOG:  consistent recovery state reached at 0/40001D0
+2026-10-21 07:42:49.813 UTC [28] @ LOG:  restored log file "000000010000000000000006" from archive
+2026-10-21 07:42:49.832 UTC [28] @ LOG:  restored log file "000000010000000000000007" from archive
+2026-10-21 07:42:49.863 UTC [28] @ LOG:  restored log file "000000010000000000000008" from archive
+2026-10-21 07:42:49.888 UTC [28] @ LOG:  restored log file "000000010000000000000009" from archive
+2026-10-21 07:42:49.920 UTC [28] @ LOG:  restored log file "00000001000000000000000A" from archive
+2026-10-21 07:42:49.936 UTC [28] @ LOG:  recovery stopping after commit of transaction 812, time 2026-10-21 06:56:58.49292+00
+2026-10-21 07:42:49.936 UTC [28] @ LOG:  pausing at the end of recovery
+2026-10-21 07:42:49.936 UTC [28] @ HINT:  Execute pg_wal_replay_resume() to promote.
+2026-10-21 07:46:08.567 UTC [28] @ LOG:  selected new timeline ID: 2
+2026-10-21 07:46:08.604 UTC [28] @ LOG:  archive recovery complete
+2026-10-21 07:46:08.621 UTC [1] @ LOG:  database system is ready to accept connections

@@ -1,0 +1,16 @@
+Workload started. Do not interrupt it.
+Batch 1 of 14 committed
+Batch 2 of 14 committed
+Batch 3 of 14 committed
+Batch 4 of 14 committed
+Batch 5 of 14 committed
+Batch 6 of 14 committed
+Batch 7 of 14 committed
+Batch 8 of 14 committed
+Batch 9 of 14 committed
+Batch 10 of 14 committed
+Batch 11 of 14 committed
+Batch 12 of 14 committed
+Batch 13 of 14 committed
+Batch 14 of 14 committed
+Workload finished. Investigate before you change anything.

@@ -1,0 +1,2 @@
+72:2026-10-21 06:50:06.803 UTC [85] postgres@drill LOG:  statement: DROP SCHEMA IF EXISTS drill CASCADE;
+198:2026-10-21 06:57:11.600 UTC [138] postgres@drill LOG:  statement: DROP TABLE drill.customer CASCADE;

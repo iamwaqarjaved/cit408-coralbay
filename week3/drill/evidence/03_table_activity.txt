@@ -1,0 +1,7 @@
+    relname    | n_live_tup | n_tup_ins | n_tup_upd | n_tup_del 
+---------------+------------+-----------+-----------+-----------
+ activity      |         14 |        14 |         0 |         0
+ dispatch      |      22100 |     22100 |         0 |         0
+ dispatch_line |      54200 |     54200 |         0 |         0
+(3 rows)
+

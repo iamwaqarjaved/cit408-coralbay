@@ -1,0 +1,12 @@
+2026-10-21 07:21:52.810 UTC [28] @ LOG:  restored log file "000000010000000000000004" from archive
+2026-10-21 07:21:52.832 UTC [28] @ LOG:  starting point-in-time recovery to XID 813
+2026-10-21 07:21:52.850 UTC [28] @ LOG:  restored log file "000000010000000000000005" from archive
+2026-10-21 07:21:52.865 UTC [28] @ LOG:  consistent recovery state reached at 0/40001D0
+2026-10-21 07:21:52.878 UTC [28] @ LOG:  restored log file "000000010000000000000006" from archive
+2026-10-21 07:21:52.900 UTC [28] @ LOG:  restored log file "000000010000000000000007" from archive
+2026-10-21 07:21:52.921 UTC [28] @ LOG:  restored log file "000000010000000000000008" from archive
+2026-10-21 07:21:52.943 UTC [28] @ LOG:  restored log file "000000010000000000000009" from archive
+2026-10-21 07:21:52.965 UTC [28] @ LOG:  restored log file "00000001000000000000000A" from archive
+2026-10-21 07:21:52.977 UTC [28] @ LOG:  recovery stopping before commit of transaction 813, time 2026-10-21 06:57:11.606275+00
+2026-10-21 07:21:52.977 UTC [28] @ LOG:  pausing at the end of recovery
+2026-10-21 07:21:52.977 UTC [28] @ HINT:  Execute pg_wal_replay_resume() to promote.

@@ -1,0 +1,7 @@
+ locktype |         rel         |        mode         | granted | pid 
+----------+---------------------+---------------------+---------+-----
+ relation | drill.dispatch      | AccessExclusiveLock | t       |  28
+ relation | drill.customer_pkey | AccessExclusiveLock | t       |  28
+ relation | drill.customer      | AccessExclusiveLock | t       |  28
+(3 rows)
+
