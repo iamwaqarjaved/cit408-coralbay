@@ -9,6 +9,7 @@ Each week's folder holds the SQL, written analysis and diagrams for that week's 
 | [`week2/`](week2/) | Assignment 2.1: normalization design for the fleet work orders (UNF → 1NF → 2NF → 3NF) | Submitted |
 | [`week2/superstore/`](week2/superstore/) | Assignment 2.3: normalize the 9,994-line Superstore retail file and build it in PostgreSQL | Submitted |
 | [`week3/backup/`](week3/backup/) | Assignment 3.1: back up Superstore, restore it, rescue a single table, and plan RPO/RTO | Submitted |
+| [`week3/drill/`](week3/drill/) | Assignment 3.2: point-in-time recovery drill, finding an unknown incident and recovering to the second | Submitted |
 
 ---
 
@@ -234,9 +235,73 @@ The course's incident desk set six recovery tickets, ranging from a dropped tabl
 
 ---
 
+## Week 3: Recovery drill, finding the incident and recovering to the second
+
+### The problem
+
+With continuous WAL archiving running, a script played back ten minutes of dispatch work, and somewhere inside it something went wrong. I didn't know what or when. The job was to find the damage and its exact moment, bring the database back to just before it, lose as little good work as possible, and write an incident report for a non-technical manager.
+
+The drill ran on PostgreSQL 17 in Docker, because point-in-time recovery needs full control of the server (archive settings, the data directory, restarting into recovery). A managed service doesn't give that.
+
+### What's in the folder
+
+| File | What it shows |
+|---|---|
+| [`incident_report.md`](week3/drill/incident_report.md) | The report: timeline in UTC and Eastern, evidence, recovery target, losses, RPO/RTO, prevention |
+| [`commands.md`](week3/drill/commands.md) | Every command in order, including the first recovery attempt and why it was redone |
+| [`evidence/`](week3/drill/evidence/) | Everything saved before recovery: server log, pg_waldump analysis, table activity, and the batches that were about to be lost |
+| [`verify.sql`](week3/drill/verify.sql) | Checks run while recovery was paused and after it finished, with both outputs |
+
+### 1. What happened
+
+The incident was `DROP TABLE drill.customer CASCADE`. It removed all 500 customers, and the foreign key from every dispatch to its customer. Four sources agree on it:
+
+| Source | Evidence |
+|---|---|
+| Server log | `06:57:11.600 UTC … statement: DROP TABLE drill.customer CASCADE;` |
+| pg_waldump | `tx: 813 … COMMIT 2026-10-21 06:57:11.606275 UTC; rels: base/16388/16390 base/16388/16393`: the only commit that deleted files |
+| Commit order | 812 (batch 8) at 06:56:58 → **813 (the DROP)** at 06:57:11 → 814 (batch 9) at 06:57:59 |
+| Live database | `to_regclass('drill.customer')` returned nothing; the foreign key was gone |
+
+The work kept running after the DROP, so six more batches were saved on top of the damage.
+
+### 2. Recovering to the right moment
+
+I targeted a **transaction ID instead of a time**. During the drill, the same instant showed as 06:57:11 UTC in the server log and 02:57:11 EDT in pg_waldump, so a time typed in the wrong zone would have missed by four hours. A transaction ID is the same in every tool.
+
+The first attempt stopped just before transaction 813, in exactly the right place:
+
+![Recovery attempt 1 stopping before transaction 813](week3/drill/02b_recovery_log_attempt1.png)
+
+But while it was paused, every query on the customer table hung. The DROP takes an exclusive lock a moment before it commits, and a recovery paused before that commit still holds the lock. So I discarded the attempt and recovered again, stopping **just after transaction 812**, the last good batch. No other work committed in between, so the data is identical, and this time it could be checked:
+
+![Recovery attempt 2 stopping after transaction 812](week3/drill/02_recovery_log.png)
+
+| Checked while paused | Result |
+|---|---|
+| Customer table | Back, with all 500 rows and the foreign key |
+| Batches 1–8 (before the DROP) | All present |
+| Batches 9–14 (after the DROP) | None present: the expected loss |
+| Dispatches / lines | 21,200 / 52,400, exactly the expected counts |
+
+Only then did I finish recovery. I removed the recovery settings, took a fresh base backup on the new timeline, and kept the damaged data directory untouched.
+
+![WAL archiving proven before the drill](week3/drill/01_pg_stat_archiver.png)
+
+### 3. The outcome
+
+| | |
+|---|---|
+| **Data lost before the incident** | None. The recovery point is 13 seconds before the DROP. |
+| **Work that arrived after it** | Batches 9–14 (900 dispatches, 1,800 lines). They were exported before recovery, so they can be reloaded rather than retyped. |
+| **RTO** | 25 min 20 s of downtime; 43 min 30 s from detection. The WAL replay itself took under a second. |
+| **Prevention** | A non-owner login for the application, an event trigger that blocks DROP, alerts on destructive statements, and a delayed standby replica |
+
+---
+
 ## Tools
 
-PostgreSQL 17 (Supabase) · psql, pg_dump, pg_dumpall and pg_restore · pgAdmin 4 · Git and GitHub
+PostgreSQL 17 (Supabase and Docker) · psql, pg_dump, pg_dumpall, pg_restore, pg_basebackup, pg_verifybackup and pg_waldump · pgAdmin 4 · Git and GitHub
 
 ## Author
 
